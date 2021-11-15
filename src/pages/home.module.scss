@@ -1,1 +1,49 @@
-// TODO
+.postList {
+  max-width: 720px;
+  margin: 2rem auto 0;
+
+  a {
+    display: block;
+    transition: transform 0.3s;
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: bold;
+    }
+
+    p {
+      margin-top: 0.5rem;
+      font-size: 1.125rem;
+      color: var(--gray-50);
+    }
+
+    &:hover {
+      transform: translateX(10px);
+    }
+
+    & + a {
+      margin-top: 3rem;
+    }
+  }
+}
+
+.info {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  > div {
+    margin-right: 1.5rem;
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      margin-right: 0.5rem;
+    }
+  }
+}
