@@ -15,21 +15,35 @@ import Link from 'next/link';
 
 import styles from './home.module.scss';
 import commonStyles from '../styles/common.module.scss';
+import { useState } from 'react';
 
+interface Post {
+  uid?: string;
+  first_publication_date: string | null;
+  data: {
+    title: string;
+    subtitle: string;
+    author: string;
+  };
+}
 
-type Post = {
-  slug: string;
-  title: string;
-  author: string;
-  subtitle: string;
-  updatedAt: string;
+interface PostPagination {
+  next_page: string;
+  results: Post[];
 }
 
 interface PostProps {
-  posts: Post[]
+  postsPagination: PostPagination;
 }
 
-export default function Posts({ posts }: PostProps) {
+export default function Posts({ postsPagination }: PostProps) {
+
+  const [posts, setPosts] = useState();
+
+  function handleLoadMorePosts() {
+
+  }
+
   return (
     <>
       <Head>
@@ -38,25 +52,30 @@ export default function Posts({ posts }: PostProps) {
       <main className={commonStyles.container}>
         <Header />
         <div className={styles.postList}>
-          {posts.map(post => (
-            <Link href={`/post/${post.slug}`} key={post.slug}>
+          {postsPagination.results.map(post => (
+            <Link href={`/post/${post.uid}`} key={post.uid}>
               <a>
-                <h1>{post.title}</h1>
-                <p>{post.subtitle}</p>
+                <h1>{post.data.title}</h1>
+                <p>{post.data.subtitle}</p>
 
                 <div className={styles.info}>
                   <div>
                     <AiOutlineCalendar size={20} />
-                    <span>{post.updatedAt}</span>
+                    <span>{post.first_publication_date}</span>
                   </div>
                   <div>
                     <RiUser3Line size={20} />
-                    <span>{post.author}</span>
+                    <span>{post.data.author}</span>
                   </div>
                 </div>
               </a>
             </Link>
           ))}
+          {postsPagination.next_page !== null && (
+            <button onClick={handleLoadMorePosts}>
+              Carregar mais posts
+            </button>
+          )}
         </div>
       </main>
     </>
@@ -73,25 +92,21 @@ export const getStaticProps: GetStaticProps = async () => {
     pageSize: 100,
   });
 
-  const posts = response.results.map(post => {
+  const postsPagination = response.results.map(post => {
     return {
-      slug: post.uid,
-      title: post.data.title,
-      subtitle: post.data.subtitle,
-      author: post.data.author,
-      updatedAt: format(
-        new Date(post.last_publication_date),
-        "d MMM yyyy",
-        {
-          locale: ptBR,
-        }
-      )
+      uid: post.uid,
+      first_publication_date: post.first_publication_date,
+      data: {
+        title: post.data.title,
+        subtitle: post.data.subtitle,
+        author: post.data.author,
+      }
     }
-  })
+  });
 
   return {
     props: {
-      posts
+      postsPagination
     },
     // revalidate: 60 * 10 // 10 minutos
   }
