@@ -143,8 +143,6 @@ export const getStaticProps: GetStaticProps = async () => {
     }
   }));
 
-  console.log(response.results);
-
   const postsPagination = {
     results: posts,
     next_page: response.next_page,
@@ -154,6 +152,6 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       postsPagination
     },
-    // revalidate: 60 * 10 // 10 minutos
+    revalidate: 60 * 10 // 10 minutos
   }
 }
