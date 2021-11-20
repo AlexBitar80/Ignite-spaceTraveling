@@ -12,9 +12,12 @@ import { AiOutlineCalendar } from 'react-icons/ai';
 import { RiUser3Line } from 'react-icons/ri';
 import { FiClock } from 'react-icons/fi';
 
+import { RichText } from 'prismic-dom';
+import Prismic from '@prismicio/client';
+
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
-import { RichText } from 'prismic-dom';
+import { useRouter } from 'next/router';
 
 interface Post {
   first_publication_date: string | null;
@@ -38,6 +41,21 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
+  const router = useRouter();
+  const wordsPerMinute = 200;
+
+  const timeReading: Number = Math.ceil(
+    post.data.content.reduce((total, item) => {
+      const heading = String(item.heading).split(' ');
+      const body = RichText.asText(item.body).split(' ');
+      return total + (body.length + heading.length);
+    }, 0) / wordsPerMinute,
+  );
+
+  if (router.isFallback) {
+    return <h1>Carregando...</h1>;
+  }
+
   return (
     <>
       <Head>
@@ -45,13 +63,19 @@ export default function Post({ post }: PostProps) {
       </Head>
       <Header />
       <img className={styles.image} src={post.data.banner.url} alt={post.data.title} />
-      <main className={styles.postContainer}>
+      <main className={commonStyles.container}>
         <article className={styles.post}>
           <h1>{post.data.title}</h1>
           <div className={styles.info}>
             <div>
               <AiOutlineCalendar size={20} />
-              <span>{post.first_publication_date}</span>
+              <span>{format(
+                new Date(post.first_publication_date),
+                "dd MMM yyyy",
+                {
+                  locale: ptBR,
+                }
+              )}</span>
             </div>
             <div>
               <RiUser3Line size={20} />
@@ -59,7 +83,7 @@ export default function Post({ post }: PostProps) {
             </div>
             <div>
               <FiClock size={20} />
-              <span>4 min</span>
+              <span>{timeReading} min</span>
             </div>
           </div>
           {post.data.content.map(content => (
@@ -67,7 +91,7 @@ export default function Post({ post }: PostProps) {
               <h2>{content.heading}</h2>
               <div
                 className={styles.postContent}
-                dangerouslySetInnerHTML={{ __html: RichText.asHtml(content.body)}}
+                dangerouslySetInnerHTML={{ __html: RichText.asHtml(content.body) }}
               />
             </section>
           ))}
@@ -78,12 +102,21 @@ export default function Post({ post }: PostProps) {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  // const prismic = getPrismicClient();
-  // const posts = await prismic.query(TODO);
+
+  const prismic = getPrismicClient();
+  const posts = await prismic.query([
+    Prismic.predicates.at('document.type', 'post')
+  ], {
+    pageSize: 5,
+  });
+
+  const paths = posts.results.map(post => ({
+    params: { slug: post.uid }
+  }))
 
   return {
-    paths: [],
-    fallback: "blocking",
+    paths,
+    fallback: true,
   }
 };
 
@@ -93,27 +126,10 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const prismic = getPrismicClient();
   const response = await prismic.getByUID('post', String(slug), {});
 
-  const post = {
-    first_publication_date: format(
-      new Date(response.last_publication_date),
-      "d MMM yyyy",
-      {
-        locale: ptBR,
-      }
-    ),
-    data: {
-      title: response.data.title,
-      banner: {
-        url: response.data.banner.url,
-      },
-      author: response.data.author,
-      content: response.data.content
-    },
-  }
-
   return {
     props: {
-      post,
-    }
+      post: response,
+    },
+    revalidate: 60 * 10 // 10 minutos
   }
 };
