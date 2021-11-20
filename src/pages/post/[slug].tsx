@@ -49,7 +49,11 @@ export default function Post({ post }: PostProps) {
       const heading = String(item.heading).split(' ');
       const body = RichText.asText(item.body).split(' ');
       return total + (body.length + heading.length);
+<<<<<<< HEAD
     }, 0) / wordsPerMinute,
+=======
+    }, 0)
+>>>>>>> b97c59781665d1caaf78428df86d05e8f4151632
   );
 
   if (router.isFallback) {
